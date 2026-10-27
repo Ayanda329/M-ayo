@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14532d">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>Tuckshop Stock & Sales</title>
+<style>
+:root{--green:#14532d;--green2:#166534;--bg:#f3f6f3;--card:#fff;--ink:#18231b;--muted:#637067;--line:#dce5dd;--red:#b42318;--amber:#92400e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:var(--green);color:white;padding:18px 16px 15px;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px #0001}
+header h1{font-size:21px;margin:0 0 3px}header p{margin:0;color:#d9f3df;font-size:12px}
+main{max-width:900px;margin:auto;padding:14px 12px 88px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:0 0 12px;position:sticky;top:77px;background:var(--bg);z-index:4}
+.tabs button{border:1px solid var(--line);background:#fff;color:var(--green);border-radius:999px;padding:10px 13px;white-space:nowrap;font-weight:700}
+.tabs button.active{background:var(--green);color:white;border-color:var(--green)}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.card,.section{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px}
+.metric small{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:22px;margin-top:5px;overflow-wrap:anywhere}
+h2{font-size:18px;margin:4px 0 12px}h3{font-size:15px;margin:0 0 9px}
+.muted{color:var(--muted);font-size:12px}.row{display:flex;gap:9px;align-items:center}.between{justify-content:space-between}.grow{flex:1;min-width:0}
+label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}
+input,select,textarea{width:100%;border:1px solid #cbd5cc;border-radius:10px;padding:12px;font:inherit;background:#fff;color:var(--ink);min-height:44px}
+button{font:inherit;cursor:pointer}.btn{border:0;border-radius:10px;background:var(--green2);color:white;font-weight:750;padding:12px 14px;min-height:44px}
+.btn.secondary{background:#e7f2e9;color:var(--green)}.btn.danger{background:#fff0ef;color:var(--red);border:1px solid #f3c8c4}.btn.small{padding:8px 10px;min-height:36px;font-size:13px}
+form .btn{width:100%;margin-top:13px}.product-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+@media(min-width:600px){.product-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.product{border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff;text-align:left;min-height:105px;display:flex;flex-direction:column;gap:4px;color:var(--ink)}
+.product:active{transform:scale(.99)}.product strong{font-size:15px;overflow-wrap:anywhere}.product .price{color:var(--green);font-weight:800}.product .stock{font-size:12px;color:var(--muted)}
+.badge{display:inline-block;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:800;background:#e8f5e9;color:#166534}
+.badge.low{background:#fff0d8;color:var(--amber)}.badge.out{background:#ffe4e1;color:var(--red)}
+.notice{border-radius:10px;background:#fff4dc;padding:10px 12px;color:#744210;font-size:13px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:700}
+.table-wrap{overflow-x:auto}.empty{text-align:center;color:var(--muted);padding:22px 8px}
+.sale-qty{width:74px;min-height:40px;padding:8px;text-align:center}
+.sale-row{display:grid;grid-template-columns:minmax(0,1fr) 78px 68px;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:10px 0}
+.sale-row:last-child{border-bottom:0}.sale-name{font-weight:700}.sale-sub{font-size:12px;color:var(--muted)}
+.footer-note{font-size:12px;color:var(--muted);margin:14px 2px}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#18231b;color:white;padding:11px 16px;border-radius:12px;z-index:20;display:none;max-width:92vw;box-shadow:0 4px 18px #0003}
+hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+</style>
+</head>
+<body>
+<header><h1>🏪 My Tuckshop</h1><p>Stock • Sales • Profit • Daily reports · South African rand (R)</p></header>
+<main>
+<div class="tabs" role="tablist">
+<button class="active" data-tab="home">Overview</button><button data-tab="sell">Record sale</button><button data-tab="stockin">Stock received</button><button data-tab="products">Products</button><button data-tab="reports">Reports</button><button data-tab="backup">Backup</button>
+</div>
+
+<section id="home" class="panel active">
+<div id="lowNotice"></div>
+<div class="grid">
+<div class="card metric"><small>Sales today</small><strong id="mSales">R0.00</strong></div>
+<div class="card metric"><small>Estimated profit today*</small><strong id="mProfit">R0.00</strong></div>
+<div class="card metric"><small>Products tracked</small><strong id="mProducts">0</strong></div>
+<div class="card metric"><small>Stock value at cost</small><strong id="mValue">R0.00</strong></div>
+</div>
+<div class="section"><div class="row between"><h2>Stock that needs attention</h2><button class="btn secondary small" onclick="switchTab('products')">View products</button></div><div id="lowList"></div></div>
+<div class="section"><h2>Recent activity</h2><div id="recent"></div></div>
+<p class="footer-note">*Estimated profit = selling value of recorded sales minus the cost of those sold items. It does not include other expenses or unpaid customer credit.</p>
+</section>
+
+<section id="sell" class="panel">
+<div class="section">
+<h2>Record a sale</h2><p class="muted">Tap a product, enter the quantity sold, then save. Stock will decrease automatically.</p>
+<input id="sellSearch" placeholder="Search products…" autocomplete="off">
+<div id="sellProducts" class="product-list" style="margin-top:10px"></div>
+<div id="saleCartWrap" style="margin-top:15px">
+<h3>Sale basket</h3><div id="saleCart"></div>
+<div class="row between" style="margin-top:12px"><strong>Total</strong><strong id="cartTotal">R0.00</strong></div>
+<button class="btn" style="width:100%;margin-top:10px" onclick="saveSale()">Save sale</button>
+<button class="btn secondary" style="width:100%;margin-top:8px" onclick="clearCart()">Clear basket</button>
+</div>
+</div>
+</section>
+
+<section id="stockin" class="panel">
+<div class="section">
+<h2>Record stock received</h2>
+<form id="stockForm">
+<label for="stockProduct">Product</label><select id="stockProduct" required></select>
+<label for="stockQty">Quantity received</label><input id="stockQty" type="number" min="0.001" step="any" required placeholder="e.g. 24">
+<label for="stockCost">Buying cost per unit (R)</label><input id="stockCost" type="number" min="0" step="0.01" required placeholder="e.g. 12.50">
+<label for="stockDate">Date received</label><input id="stockDate" type="date" required>
+<label for="stockSupplier">Supplier / note (optional)</label><input id="stockSupplier" placeholder="e.g. Wholesale shop">
+<button class="btn" type="submit">Add stock to balance</button>
+</form>
+</div>
+<div class="section"><h2>Recent stock received</h2><div id="stockHistory"></div></div>
+</section>
+
+<section id="products" class="panel">
+<div class="section">
+<h2>Add a product</h2>
+<form id="productForm">
+<label for="pName">Product name</label><input id="pName" required maxlength="80" placeholder="e.g. Coke 500ml">
+<label for="pOpening">Opening stock quantity</label><input id="pOpening" type="number" min="0" step="any" value="0" required>
+<label for="pCost">Buying cost per unit (R)</label><input id="pCost" type="number" min="0" step="0.01" required placeholder="e.g. 10.00">
+<label for="pPrice">Selling price per unit (R)</label><input id="pPrice" type="number" min="0" step="0.01" required placeholder="e.g. 14.00">
+<label for="pMin">Low-stock alert at quantity</label><input id="pMin" type="number" min="0" step="any" value="5" required>
+<button class="btn" type="submit">Save product</button>
+</form>
+</div>
+<div class="section"><div class="row between"><h2>All products & current balance</h2><span class="muted" id="productCount"></span></div><input id="productSearch" placeholder="Search products…" autocomplete="off"><div id="productTable" class="table-wrap" style="margin-top:8px"></div></div>
+</section>
+
+<section id="reports" class="panel">
+<div class="section">
+<h2>Daily report</h2>
+<label for="reportDate">Choose date</label><input id="reportDate" type="date">
+<div class="grid" style="margin-top:12px">
+<div class="card metric"><small>Sales income</small><strong id="rSales">R0.00</strong></div>
+<div class="card metric"><small>Estimated profit</small><strong id="rProfit">R0.00</strong></div>
+<div class="card metric"><small>Units sold</small><strong id="rUnits">0</strong></div>
+<div class="card metric"><small>Transactions</small><strong id="rCount">0</strong></div>
+</div>
+<div class="row" style="margin:12px 0"><button class="btn secondary grow" onclick="exportDailyCSV()">Export this day's sales (CSV)</button></div>
+<h3>Sales by product</h3><div id="dailyProducts"></div>
+<h3 style="margin-top:18px">Transactions</h3><div id="dailyTransactions"></div>
+</div>
+<div class="section"><h2>Stock balance check</h2><p class="muted">Enter the quantity you physically counted. The system compares it with expected stock.</p><div id="balanceTable"></div></div>
+</section>
+
+<section id="backup" class="panel">
+<div class="section">
+<h2>Back up your data</h2><p>Keep a backup regularly, especially before changing phones or clearing browser data. Your records are stored on this device/browser.</p>
+<button class="btn" style="width:100%" onclick="downloadBackup()">Download full backup</button>
+<label for="restoreFile">Restore a previous backup</label><input id="restoreFile" type="file" accept=".json,application/json">
+<button class="btn secondary" style="width:100%" onclick="document.getElementById('restoreFile').click()">Choose backup file</button>
+<hr><h3>Export records</h3><button class="btn secondary" style="width:100%;margin-top:7px" onclick="exportProductsCSV()">Export product stock (CSV)</button><button class="btn secondary" style="width:100%;margin-top:7px" onclick="exportAllSalesCSV()">Export all sales (CSV)</button><button class="btn secondary" style="width:100%;margin-top:7px" onclick="exportStockCSV()">Export stock received (CSV)</button>
+<p class="footer-note">Tip: download a backup to your phone and keep a copy somewhere safe. Exported CSV files can be opened in spreadsheet apps.</p>
+</div>
+<div class="section"><h2>Important</h2><ul><li>Record every sale and every stock delivery.</li><li>Use the same unit each time (one bottle, one loaf, one packet, etc.).</li><li>Count your physical stock regularly and record differences.</li><li>This is a local offline-first tool, not a cloud sync system. It does not automatically share data across devices.</li></ul></div>
+</section>
+</main>
+<div id="toast" role="status"></div>
+<script>
+const KEY='tuckshop_manager_v1';
+const today=()=>new Date().toLocaleDateString('en-CA');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const money=n=>'R'+(Number(n)||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+let db={products:[],sales:[],stockIns:[],adjustments:[]}, cart={};
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&Array.isArray(x.products))db={...db,...x}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));return true}catch(e){toast('Could not save data. Please download a backup and free up storage.');return false}}
+function toast(s){const t=document.getElementById('toast');t.textContent=s;t.style.display='block';clearTimeout(window._toastTimer);window._toastTimer=setTimeout(()=>t.style.display='none',2600)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function dateOf(s){return (s||'').slice(0,10)}
+function product(id){return db.products.find(p=>p.id===id)}
+function expected(p){return Number(p.opening||0)+db.stockIns.filter(s=>s.productId===p.id).reduce((a,s)=>a+Number(s.qty),0)-db.sales.reduce((a,s)=>a+s.items.filter(i=>i.productId===p.id).reduce((b,i)=>b+Number(i.qty),0),0)+db.adjustments.filter(a=>a.productId===p.id).reduce((a,x)=>a+Number(x.delta),0)}
+function stockCost(p){return Number(p.cost)||0}
+function soldOn(date){return db.sales.filter(s=>dateOf(s.date)===date)}
+function totals(sales){let income=0,cost=0,units=0;for(const s of sales)for(const i of s.items){income+=Number(i.qty)*Number(i.price);cost+=Number(i.qty)*Number(i.cost);units+=Number(i.qty)}return {income,cost,profit:income-cost,units,count:sales.length}}
+function switchTab(id){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='sell')renderSell();if(id==='products')renderProducts();if(id==='stockin')renderStockIn();if(id==='reports')renderReports();window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+function render(){renderHome();renderSell();renderStockIn();renderProducts();renderReports()}
+function renderHome(){
+ const t=totals(soldOn(today()));document.getElementById('mSales').textContent=money(t.income);document.getElementById('mProfit').textContent=money(t.profit);document.getElementById('mProducts').textContent=db.products.length;document.getElementById('mValue').textContent=money(db.products.reduce((a,p)=>a+Math.max(0,expected(p))*stockCost(p),0));
+ const low=db.products.filter(p=>expected(p)<=Number(p.min||0));
+ document.getElementById('lowNotice').innerHTML=low.length?`<div class="notice">⚠️ <b>${low.length} product(s)</b> at or below their low-stock alert level. Check your stock before buying.</div>`:'';
+ document.getElementById('lowList').innerHTML=low.length?low.map(p=>`<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>${esc(p.name)}</b><div class="muted">Alert at ${p.min}</div></div><span class="badge ${expected(p)<=0?'out':'low'}">${expected(p)<=0?'OUT':expected(p)+' left'}</span></div>`).join(''):'<div class="empty">No low-stock alerts. Add products to start tracking.</div>';
+ const activity=[...db.sales.map(s=>({date:s.date,type:'Sale',detail:s.items.map(i=>`${i.qty} × ${i.name}`).join(', '),amount:s.items.reduce((a,i)=>a+i.qty*i.price,0)})),...db.stockIns.map(s=>({date:s.date,type:'Stock received',detail:(product(s.productId)?.name||'Deleted product')+` · ${s.qty} units`,amount:-(s.qty*s.cost)}))].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
+ document.getElementById('recent').innerHTML=activity.length?activity.map(a=>`<div class="row between" style="padding:9px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>${esc(a.type)}</b><div class="muted">${esc(a.detail)}</div><div class="muted">${esc(a.date.replace('T',' '))}</div></div><b>${a.type==='Sale'?money(a.amount):'−'+money(-a.amount)}</b></div>`).join(''):'<div class="empty">No activity yet. Add products, then record stock and sales.</div>';
+}
+function renderSell(){
+ const q=(document.getElementById('sellSearch').value||'').toLowerCase();
+ const list=db.products.filter(p=>p.name.toLowerCase().includes(q));
+ document.getElementById('sellProducts').innerHTML=list.length?list.map(p=>`<button class="product" onclick="addCart('${p.id}')" ${expected(p)<=0?'disabled style="opacity:.55"':''}><strong>${esc(p.name)}</strong><span class="price">${money(p.price)}</span><span class="stock">${expected(p)} in stock</span><span class="muted">${expected(p)<=0?'Out of stock':'Tap to add'}</span></button>`).join(''):'<div class="empty" style="grid-column:1/-1">No products found. Add products in the Products tab.</div>';
+ renderCart();
+}
+function addCart(id){const p=product(id);if(!p||expected(p)<=0){toast('This product is out of stock.');return}cart[id]=(cart[id]||0)+1;if(cart[id]>expected(p))cart[id]=expected(p);renderCart()}
+function setCart(id,val){const p=product(id);let n=Number(val);if(!p||!Number.isFinite(n)||n<=0)delete cart[id];else cart[id]=Math.min(n,expected(p));renderCart()}
+function renderCart(){const entries=Object.entries(cart).filter(([id,q])=>product(id)&&q>0);document.getElementById('saleCart').innerHTML=entries.length?entries.map(([id,q])=>{const p=product(id);return `<div class="sale-row"><div><div class="sale-name">${esc(p.name)}</div><div class="sale-sub">${money(p.price)} each</div></div><input class="sale-qty" aria-label="Quantity ${esc(p.name)}" type="number" min="0" max="${expected(p)}" step="any" value="${q}" onchange="setCart('${id}',this.value)"><button class="btn danger small" onclick="delete cart['${id}'];renderCart()">Remove</button></div>`}).join(''):'<div class="empty">Tap a product above to add it to the sale.</div>';const total=entries.reduce((a,[id,q])=>a+q*Number(product(id).price),0);document.getElementById('cartTotal').textContent=money(total)}
+function clearCart(){cart={};renderCart()}
+function saveSale(){const entries=Object.entries(cart).filter(([id,q])=>product(id)&&q>0);if(!entries.length){toast('Add at least one product to the basket.');return}for(const [id,q] of entries)if(q>expected(product(id))){toast('Not enough stock for '+product(id).name);return}const items=entries.map(([id,q])=>{const p=product(id);return {productId:id,name:p.name,qty:Number(q),price:Number(p.price),cost:stockCost(p)}});db.sales.push({id:uid(),date:new Date().toISOString(),items});save();cart={};render();toast('Sale saved. Stock balance updated.')}
+document.getElementById('sellSearch').addEventListener('input',renderSell);
+document.getElementById('productForm').addEventListener('submit',e=>{e.preventDefault();const name=document.getElementById('pName').value.trim();if(db.products.some(p=>p.name.toLowerCase()===name.toLowerCase())){toast('A product with that name already exists.');return}const p={id:uid(),name,opening:Number(document.getElementById('pOpening').value),cost:Number(document.getElementById('pCost').value),price:Number(document.getElementById('pPrice').value),min:Number(document.getElementById('pMin').value)};db.products.push(p);save();e.target.reset();document.getElementById('pOpening').value='0';document.getElementById('pMin').value='5';render();toast('Product saved.');});
+document.getElementById('stockForm').addEventListener('submit',e=>{e.preventDefault();const id=document.getElementById('stockProduct').value;if(!product(id)){toast('Please add a product first.');return}const qty=Number(document.getElementById('stockQty').value),cost=Number(document.getElementById('stockCost').value);if(qty<=0||cost<0){toast('Enter a valid quantity and cost.');return}db.stockIns.push({id:uid(),productId:id,qty,cost,date:document.getElementById('stockDate').value||today(),supplier:document.getElementById('stockSupplier').value.trim()});product(id).cost=cost;save();e.target.reset();document.getElementById('stockDate').value=today();render();toast('Stock received recorded. Balance updated.');});
+function renderStockIn(){const sel=document.getElementById('stockProduct'),old=sel.value;sel.innerHTML=db.products.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');if(product(old))sel.value=old;document.getElementById('stockDate').value=document.getElementById('stockDate').value||today();const arr=[...db.stockIns].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);document.getElementById('stockHistory').innerHTML=arr.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Cost/unit</th><th>Supplier/note</th></tr></thead><tbody>${arr.map(s=>`<tr><td>${esc(s.date)}</td><td>${esc(product(s.productId)?.name||'Deleted product')}</td><td>${s.qty}</td><td>${money(s.cost)}</td><td>${esc(s.supplier||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No stock deliveries recorded yet.</div>'}
+function renderProducts(){const q=(document.getElementById('productSearch').value||'').toLowerCase();const arr=db.products.filter(p=>p.name.toLowerCase().includes(q));document.getElementById('productCount').textContent=db.products.length+' total';document.getElementById('productTable').innerHTML=arr.length?`<table><thead><tr><th>Product</th><th>Stock</th><th>Cost</th><th>Sell</th><th>Alert</th><th>Actions</th></tr></thead><tbody>${arr.map(p=>{let st=expected(p);return `<tr><td><b>${esc(p.name)}</b></td><td><span class="badge ${st<=0?'out':st<=p.min?'low':''}">${st}</span></td><td>${money(p.cost)}</td><td>${money(p.price)}</td><td>${p.min}</td><td><button class="btn secondary small" onclick="editProduct('${p.id}')">Edit</button> <button class="btn danger small" onclick="deleteProduct('${p.id}')">Delete</button> <button class="btn secondary small" onclick="countStock('${p.id}')">Count</button></td></tr>`}).join('')}</tbody></table>`:'<div class="empty">No products yet. Add your first product above.</div>'}
+document.getElementById('productSearch').addEventListener('input',renderProducts);
+function editProduct(id){const p=product(id);if(!p)return;const name=prompt('Product name:',p.name);if(name===null)return;if(!name.trim()){toast('Name cannot be blank.');return}const cost=prompt('Current buying cost per unit (R):',p.cost);if(cost===null)return;const price=prompt('Selling price per unit (R):',p.price);if(price===null)return;const min=prompt('Low-stock alert quantity:',p.min);if(min===null)return;if([cost,price,min].some(x=>x.trim()===''||!Number.isFinite(Number(x))||Number(x)<0)){toast('Please enter valid non-negative numbers.');return}p.name=name.trim();p.cost=Number(cost);p.price=Number(price);p.min=Number(min);save();render();toast('Product details updated.')}
+function deleteProduct(id){const p=product(id);if(!p)return;if(!confirm(`Delete ${p.name} from the product list? Existing sales remain in reports, but its stock history will no longer be linked.`))return;db.products=db.products.filter(x=>x.id!==id);cart[id]=0;save();render();toast('Product deleted.')}
+function countStock(id){const p=product(id);if(!p)return;const actual=prompt(`Physical count for ${p.name}. Expected stock is ${expected(p)}. Enter the quantity you counted:`);if(actual===null)return;const n=Number(actual);if(actual.trim()===''||!Number.isFinite(n)||n<0){toast('Enter a valid stock count.');return}const delta=n-expected(p);if(delta===0){toast('Stock matches. No adjustment needed.');return}db.adjustments.push({id:uid(),productId:id,delta,date:today(),note:'Physical stock count'});save();render();toast(`Stock balance adjusted by ${delta>0?'+':''}${delta}.`)}
+function renderReports(){const date=document.getElementById('reportDate').value||today();document.getElementById('reportDate').value=date;const ss=soldOn(date),t=totals(ss);document.getElementById('rSales').textContent=money(t.income);document.getElementById('rProfit').textContent=money(t.profit);document.getElementById('rUnits').textContent=t.units;document.getElementById('rCount').textContent=t.count;const by={};for(const s of ss)for(const i of s.items){if(!by[i.productId])by[i.productId]={name:i.name,qty:0,sales:0,profit:0};by[i.productId].qty+=i.qty;by[i.productId].sales+=i.qty*i.price;by[i.productId].profit+=i.qty*(i.price-i.cost)}const vals=Object.values(by);document.getElementById('dailyProducts').innerHTML=vals.length?`<div class="table-wrap"><table><thead><tr><th>Product</th><th>Qty</th><th>Sales</th><th>Est. profit</th></tr></thead><tbody>${vals.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td>${money(x.sales)}</td><td>${money(x.profit)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No sales recorded for this date.</div>';document.getElementById('dailyTransactions').innerHTML=ss.length?ss.map(s=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${new Date(s.date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · ${money(s.items.reduce((a,i)=>a+i.qty*i.price,0))}</b><div class="muted">${s.items.map(i=>`${esc(i.name)} × ${i.qty}`).join(', ')}</div></div>`).join(''):'<div class="empty">No transactions.</div>';document.getElementById('balanceTable').innerHTML=db.products.length?`<table><thead><tr><th>Product</th><th>Expected</th><th>Physical count</th></tr></thead><tbody>${db.products.map(p=>`<tr><td>${esc(p.name)}</td><td>${expected(p)}</td><td><button class="btn secondary small" onclick="countStock('${p.id}')">Enter count</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Add products to check stock balance.</div>'}
+document.getElementById('reportDate').addEventListener('change',renderReports);
+function csvDownload(name,rows){const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function exportDailyCSV(){const date=document.getElementById('reportDate').value||today(),ss=soldOn(date),rows=[['Date/time','Product','Quantity','Selling price/unit (R)','Cost/unit (R)','Sales (R)','Estimated profit (R)']];for(const s of ss)for(const i of s.items)rows.push([s.date,i.name,i.qty,i.price,i.cost,i.qty*i.price,i.qty*(i.price-i.cost)]);csvDownload('tuckshop-sales-'+date+'.csv',rows)}
+function exportAllSalesCSV(){const rows=[['Date/time','Product','Quantity','Selling price/unit (R)','Cost/unit (R)','Sales (R)','Estimated profit (R)']];for(const s of db.sales)for(const i of s.items)rows.push([s.date,i.name,i.qty,i.price,i.cost,i.qty*i.price,i.qty*(i.price-i.cost)]);csvDownload('tuckshop-all-sales.csv',rows)}
+function exportProductsCSV(){csvDownload('tuckshop-stock-balance.csv',[['Product','Opening stock','Stock received','Units sold','Adjustments','Expected stock','Buying cost/unit (R)','Selling price/unit (R)','Low-stock alert','Stock value at cost (R)'],...db.products.map(p=>[p.name,p.opening,db.stockIns.filter(s=>s.productId===p.id).reduce((a,s)=>a+s.qty,0),db.sales.reduce((a,s)=>a+s.items.filter(i=>i.productId===p.id).reduce((b,i)=>b+i.qty,0),0),db.adjustments.filter(a=>a.productId===p.id).reduce((a,x)=>a+x.delta,0),expected(p),p.cost,p.price,p.min,Math.max(0,expected(p))*p.cost])])}
+function exportStockCSV(){csvDownload('tuckshop-stock-received.csv',[['Date','Product','Quantity','Cost/unit (R)','Total cost (R)','Supplier/note'],...db.stockIns.map(s=>[s.date,product(s.productId)?.name||'Deleted product',s.qty,s.cost,s.qty*s.cost,s.supplier])])}
+function downloadBackup(){const blob=new Blob([JSON.stringify({...db,backupCreated:new Date().toISOString(),app:'My Tuckshop Stock & Sales'},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='my-tuckshop-backup-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Backup download started.')}
+document.getElementById('restoreFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!Array.isArray(x.products)||!Array.isArray(x.sales)||!Array.isArray(x.stockIns))throw Error('Invalid');if(!confirm('Replace current tuckshop records with the backup? Download a backup of current data first if you need it.'))return;db={products:x.products,sales:x.sales,stockIns:x.stockIns,adjustments:Array.isArray(x.adjustments)?x.adjustments:[]};save();render();toast('Backup restored.')}catch(err){toast('That file does not look like a valid tuckshop backup.')}e.target.value=''};r.readAsText(f)});
+load();document.getElementById('stockDate').value=today();document.getElementById('reportDate').value=today();render();
+</script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:') { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error)); }</script>
+</body></html>
